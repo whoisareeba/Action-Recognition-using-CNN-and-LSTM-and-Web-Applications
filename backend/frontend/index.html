@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Action Recognition</title>
+  <style>
+    /* Reset & base */
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: #f0f2f5;
+    }
+
+    /* Card container */
+    .card {
+      background: #fff;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      text-align: center;
+      max-width: 400px;
+      width: 90%;
+    }
+
+    h2 {
+      margin-bottom: 20px;
+      color: #333;
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    .file-label {
+      display: inline-block;
+      padding: 12px 25px;
+      background: #4f46e5;
+      color: #fff;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-bottom: 20px;
+      transition: background 0.3s;
+    }
+
+    .file-label:hover {
+      background: #4338ca;
+    }
+
+    #preview {
+      max-width: 100%;
+      max-height: 200px;
+      margin-bottom: 20px;
+      border-radius: 10px;
+      border: 1px solid #ddd;
+      object-fit: contain;
+      display: none;
+    }
+
+    button {
+      padding: 12px 25px;
+      background: #10b981;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background 0.3s;
+    }
+
+    button:hover {
+      background: #059669;
+    }
+
+    #result {
+      margin-top: 20px;
+      font-weight: bold;
+      color: #111827;
+      font-size: 18px;
+      min-height: 24px;
+    }
+
+    /* Responsive */
+    @media(max-width: 480px) {
+      .card { padding: 20px; }
+      button, .file-label { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <h2>Action Recognition</h2>
+  
+  <label class="file-label" for="img">Choose Image</label>
+  <input type="file" id="img" accept="image/*" onchange="previewImage(event)">
+  
+  <img id="preview" src="" alt="Image preview">
+  
+  <button onclick="predict()">Predict</button>
+  
+  <p id="result"></p>
+</div>
+
+<script>
+  // Preview the selected image
+  function previewImage(event) {
+    const preview = document.getElementById('preview');
+    const file = event.target.files[0];
+    if (file) {
+      preview.src = URL.createObjectURL(file);
+      preview.style.display = 'block';
+    } else {
+      preview.style.display = 'none';
+    }
+  }
+
+  // Send image to backend and show prediction
+  async function predict() {
+    const fileInput = document.getElementById('img');
+    const file = fileInput.files[0];
+    if (!file) {
+      alert("Please select an image first!");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const resultEl = document.getElementById("result");
+    resultEl.innerText = "Predicting...";
+
+    try {
+      const res = await fetch("http://127.0.0.1:8000/predict", {
+        method: "POST",
+        body: formData
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || "Server returned an error");
+      }
+
+      const data = await res.json();
+
+      // Match backend response key
+      if (data.predicted_action) {
+        resultEl.innerText = "Predicted Action: " + data.predicted_action;
+      } else if (data.error) {
+        resultEl.innerText = "Error: " + data.error;
+      } else {
+        resultEl.innerText = "Unexpected response from server.";
+      }
+
+    } catch (err) {
+      console.error(err);
+      resultEl.innerText = "Error: " + err.message;
+    }
+  }
+</script>
+
+</body>
+</html>
