@@ -3,7 +3,11 @@ venv/
 __pycache__/
 *.pyc
 
-# Environment variables
+# ML models
+*.pth
+*.pt
+
+# Environment
 .env
 
 # Frontend
